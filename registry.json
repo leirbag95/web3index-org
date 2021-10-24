@@ -80,5 +80,18 @@
     "usage": "https://akashlytics.com/web3-index/revenue",
     "coingeckoID": "akash-network",
     "genesisDate": "2020-09-24"
+  },
+  "wildcredit": {
+    "blockchain": "Ethereum",
+    "category": "Work Protocol",
+    "color": "#222634",
+    "everestID": "0xbd7f29063e4884c861c22058aadccfe6bb7ca1a0",
+    "image": "https://ipfs.infura.io/ipfs/QmTwc47XCmtwq2fbapA5EycwuW1SZbZqeJAS4KYN3HwbQN",
+    "name": "Wild Credit",
+    "stack": "Middleware",
+    "subcategory": "Lending",
+    "symbol": "WILD",
+    "coingeckoID": "wild-credit",
+    "genesisDate": "2021-05-17"
   }
 }
