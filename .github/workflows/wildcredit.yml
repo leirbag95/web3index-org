@@ -38,4 +38,3 @@ jobs:
       run: node ./cmd/wildcredit.js
       env:
         DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        TOKENTERMINAL_API_KEY: ${{ secrets.TOKENTERMINAL_API_KEY }}
