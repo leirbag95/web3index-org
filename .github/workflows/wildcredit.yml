@@ -28,6 +28,8 @@ jobs:
       run: npm install -g typescript
     - name: change directory
       run: cd ./cmd
+    - name: install packages
+      run: npm install web3 ethers @uniswap/v3-sdk @uniswap/sdk-core
     - name: compile
       run: tsc ./cmd/wildcredit.ts --esModuleInterop
     - name: list files
