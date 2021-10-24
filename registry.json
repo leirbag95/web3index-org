@@ -92,6 +92,7 @@
     "subcategory": "Lending",
     "symbol": "WILD",
     "coingeckoID": "wild-credit",
-    "genesisDate": "2021-05-17"
+    "genesisDate": "2021-05-17",
+    "subgraph": true
   }
 }
