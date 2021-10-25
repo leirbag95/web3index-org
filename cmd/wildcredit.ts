@@ -1,4 +1,5 @@
 import prisma from "../lib/prisma";
+console.log("DATABASE_URL", process.env.DATABASE_URL);
 
 const minDate = Date.now() / 1000 - 3600;
 const maxDate = Date.now() / 1000;
