@@ -1,7 +1,6 @@
 import prisma from "../lib/prisma";
-console.log("DATABASE_URL", process.env.DATABASE_URL);
 
-const minDate = Date.now() / 1000 - 3600;
+const minDate = Date.now() / 1000 - 14400;
 const maxDate = Date.now() / 1000;
 
 const Web3Lib = require("web3");
@@ -437,7 +436,7 @@ const UniswapV3OracleABI = [
 ];
 
 // web3 config
-const provider = process.env.INFURA_ETH;
+const provider = process.env.INFURA_API_KEY;
 
 const web3 = new Web3Lib(provider);
 
@@ -532,20 +531,17 @@ const wildcreditImport = async () => {
   const project = await getProject(coin.name);
 
   let response;
-  feeDistribution(minDate, maxDate).then((r) => {
+  await feeDistribution(minDate, maxDate).then((r) => {
     response = r;
   });
 
-  const days = project.days;
-  let lastDate: any;
+  console.log(response.data);
 
-  if (isNaN(days)) {
-    lastDate = new Date(
-      response.data[response.data.length - 1].datetime.split("+")[0]
-    );
-  } else {
-    lastDate = new Date(days[-1].date);
-  }
+  const days = project.days;
+
+  const lastDate = new Date();
+
+  lastDate.setHours(lastDate.getHours() - 1);
 
   const fromDate = lastDate;
   fromDate.setUTCHours(0, 0, 0, 0);
@@ -555,37 +551,21 @@ const wildcreditImport = async () => {
   const toDate = new Date();
   toDate.setUTCHours(0, 0, 0, 0);
 
-  const difference = dateDiffInDays(fromDate, toDate);
+  console.log(
+    "Store day " +
+      fromDate +
+      " - " +
+      fromDate.getTime() / 1000 +
+      "to DB - " +
+      response.data.fee
+  );
 
-  for (let index = difference; index >= 0; index--) {
-    const element = response.data.filter((obj) => {
-      const objDate = new Date(obj.datetime.split("+")[0]);
-      objDate.setUTCHours(0, 0, 0, 0);
-      return objDate.getTime() === fromDate.getTime();
-    })[0];
+  const dayData = {
+    fees: response.data.fee,
+    date: Math.floor(maxDate),
+  };
 
-    if (element === undefined) {
-      console.log("In continue");
-      fromDate.setDate(fromDate.getDate() + 1);
-      continue;
-    }
-
-    const fee = {
-      date: fromDate.getTime() / 1000,
-      fees: element.revenue_supply_side,
-    };
-
-    console.log(
-      "Store day " +
-        fromDate +
-        " - " +
-        fromDate.getTime() / 1000 +
-        "to DB - " +
-        fee.fees
-    );
-    await storeDBData(fee, project.id);
-    fromDate.setDate(fromDate.getDate() + 1);
-  }
+  await storeDBData(dayData, project.id);
   console.log("exit scrape function.");
 
   return;
@@ -658,14 +638,6 @@ const storeDBData = async (
   });
 
   return;
-};
-
-const dateDiffInDays = (a: Date, b: Date) => {
-  const _MS_PER_DAY = 1000 * 60 * 60 * 24;
-  const utc1 = Date.UTC(a.getUTCFullYear(), a.getUTCMonth(), a.getUTCDate());
-  const utc2 = Date.UTC(b.getUTCFullYear(), b.getUTCMonth(), b.getUTCDate());
-
-  return Math.floor((utc2 - utc1) / _MS_PER_DAY);
 };
 
 wildcreditImport()
