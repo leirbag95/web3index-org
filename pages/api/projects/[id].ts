@@ -25,7 +25,7 @@ const getUsageFromDB = async (name) => {
     where: {
       projectId: project.id,
     },
-    sum: {
+    _sum: {
       revenue: true,
     },
   });
@@ -43,7 +43,7 @@ const getUsageFromDB = async (name) => {
 
   const tmp = {
     revenue: {
-      now: now.sum.revenue, // total revenue as of now
+      now: now._sum.revenue, // total revenue as of now
       oneDayAgo: await getRevenueFromDB(project.id, utcOneDayBack, prisma), // total revenue as of 1 day ago
       twoDaysAgo: await getRevenueFromDB(project.id, utcTwoDaysBack, prisma), // total revenue as of two days ago
       oneWeekAgo: await getRevenueFromDB(project.id, utcOneWeekBack, prisma), // total revenue as of one week ago
@@ -78,16 +78,16 @@ const getRevenueFromDB = async (projectId, date, prisma) => {
         lte: date,
       },
     },
-    sum: {
+    _sum: {
       revenue: true,
     },
   });
 
-  if (rev.sum.revenue == null) {
+  if (rev._sum.revenue == null) {
     return 0;
   }
 
-  return rev.sum.revenue;
+  return rev._sum.revenue;
 };
 
 const getRevenueByBlock = async (id, blockNumber) => {

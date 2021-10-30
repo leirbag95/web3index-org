@@ -1,8 +1,5 @@
 import prisma from "../lib/prisma";
 
-const minDate = Date.now() / 1000 - 14400;
-const maxDate = Date.now() / 1000;
-
 const Web3Lib = require("web3");
 
 const WILD_DECIMALS = 10 ** 18;
@@ -436,7 +433,7 @@ const UniswapV3OracleABI = [
 ];
 
 // web3 config
-const provider = process.env.INFURA_API_KEY;
+const provider = process.env.INFURA_PROVIDER;
 
 const web3 = new Web3Lib(provider);
 
@@ -450,10 +447,16 @@ const UniswapV3OracleContract = new web3.eth.Contract(
   Addresses.uniswapv3Oracle
 );
 
+// UTILS
+///check whether timestamp are on same day
+const TimeStampAreOnSameDay = (d1: Date, d2: Date) =>
+  d1.getFullYear() === d2.getFullYear() &&
+  d1.getMonth() === d2.getMonth() &&
+  d1.getDate() === d2.getDate();
 /**
  * Fecth fee distribution from fee recipient event
  */
-const feeDistribution = async (minDate: any, maxDate: any) => {
+const FeeDistribution = async () => {
   const feeDistribution = await feeRecipientContract.getPastEvents(
     "FeeDistribution",
     { fromBlock: "earliest", toBlock: "latest" },
@@ -461,6 +464,9 @@ const feeDistribution = async (minDate: any, maxDate: any) => {
       if (err) console.log("An error has occured", err);
     }
   );
+
+  // today date
+  const today = new Date();
 
   // iterate through events fee dist. array
   let totalFeeDistribution = 0;
@@ -475,18 +481,20 @@ const feeDistribution = async (minDate: any, maxDate: any) => {
 
     const selectedBlock = await web3.eth.getBlock(event.blockNumber);
 
-    const blockTimestamp = selectedBlock.timestamp;
+    const blockTimestamp = selectedBlock.timestamp * 1000;
 
-    // check if tx is in correct range
-    if (maxDate >= blockTimestamp && blockTimestamp >= minDate) {
+    // check if tx is on same day that now
+    if (TimeStampAreOnSameDay(today, new Date(blockTimestamp))) {
       totalFeeDistribution += event.returnValues.amount / WILD_DECIMALS;
-    } else if (blockTimestamp < minDate) {
+    } else {
+      // if timestamp isnt on sameday leave the loop by setting index > 0
       index = -1;
     }
 
     index -= 1;
   }
 
+  // fetch wild price from Uniswap V3 Oracle Contract
   const wildPriceWithDec = await UniswapV3OracleContract.methods
     .tokenPrice(Addresses.wild)
     .call()
@@ -503,12 +511,10 @@ const feeDistribution = async (minDate: any, maxDate: any) => {
       fee: totalFeeDistribution_dai,
       wild_token: totalFeeDistribution,
       wild_price: wildPrice,
-    },
-    meta: {
-      min_time: minDate,
-      max_time: maxDate,
+      datetime: today.setHours(0, 0, 0, 0),
     },
   };
+
   return response;
 };
 
@@ -521,7 +527,7 @@ const today = new Date();
 today.setUTCHours(0, 0, 0, 0);
 
 // Update wildcredit daily revenue data
-// a cron job should hit this endpoint every half hour or so (can use github actions for cron)
+// a cron job should hit this endpoint every  hour or so (can use github actions for cron)
 const wildcreditImport = async () => {
   // Use the updatedAt field in the Day model and compare it with the
   // timestamp associated with the fee, if it's less than the timestamp
@@ -531,41 +537,23 @@ const wildcreditImport = async () => {
   const project = await getProject(coin.name);
 
   let response;
-  await feeDistribution(minDate, maxDate).then((r) => {
-    response = r;
-  });
+  await FeeDistribution()
+    .then((res: any) => {
+      response = res;
+    })
+    .catch((err: any) => {
+      console.log("error has been occured with FeeDistribution function", err);
+    });
 
-  console.log(response.data);
-
-  const days = project.days;
-
-  const lastDate = new Date();
-
-  lastDate.setHours(lastDate.getHours() - 1);
-
-  const fromDate = lastDate;
-  fromDate.setUTCHours(0, 0, 0, 0);
-
-  console.log("Project: " + project.name + ", from date: " + fromDate);
-
-  const toDate = new Date();
-  toDate.setUTCHours(0, 0, 0, 0);
-
-  console.log(
-    "Store day " +
-      fromDate +
-      " - " +
-      fromDate.getTime() / 1000 +
-      "to DB - " +
-      response.data.fee
-  );
-
-  const dayData = {
+  const fee = {
+    date: response.data.datetime / 1000,
     fees: response.data.fee,
-    date: Math.floor(maxDate),
   };
 
-  await storeDBData(dayData, project.id);
+  console.log(`fees calculation of ${fee.date}`);
+  // store result into database
+  await storeDBData(fee, project.id);
+
   console.log("exit scrape function.");
 
   return;
