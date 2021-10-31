@@ -433,7 +433,7 @@ const UniswapV3OracleABI = [
 ];
 
 // web3 config
-const provider = process.env.INFURA_PROVIDER;
+const provider = `${process.env.INFURA_PROVIDER}${process.env.INFURE_API_KEY}`;
 
 const web3 = new Web3Lib(provider);
 
@@ -542,7 +542,7 @@ const wildcreditImport = async () => {
       response = res;
     })
     .catch((err: any) => {
-      console.log("error has been occured with FeeDistribution function", err);
+      console.log("An error has occured with FeeDistribution function", err);
     });
 
   const fee = {
@@ -550,7 +550,7 @@ const wildcreditImport = async () => {
     fees: response.data.fee,
   };
 
-  console.log(`fees calculation of ${fee.date}`);
+  console.log(`Fees calculation of the day (${fee.date})`);
   // store result into database
   await storeDBData(fee, project.id);
 
