@@ -433,7 +433,7 @@ const UniswapV3OracleABI = [
 ];
 
 // web3 config
-const provider = `${process.env.INFURA_PROVIDER}${process.env.INFURE_API_KEY}`;
+const provider = `${process.env.INFURA_PROVIDER}${process.env.INFURA_API_KEY}`;
 
 const web3 = new Web3Lib(provider);
 
