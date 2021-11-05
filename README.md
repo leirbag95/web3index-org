@@ -66,6 +66,16 @@ After that, run the Prisma ORM database schema migration tool:
 npx prisma migrate dev --name init
 ```
 
+Then insert data into local data for filecoin and wildcredit (no need akash script it will fetch data automatically)
+```bash
+cd ./cmd
+tsc wildcredit.ts --esModuleInterop
+node wildcredit.js
+
+tsc filecoin.ts --esModuleInterop
+node filecoin.js
+```
+
 Finally, run the development server:
 
 ```bash
